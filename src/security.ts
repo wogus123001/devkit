@@ -118,6 +118,7 @@ export function safeUrl(url: string, kind: 'href' | 'src'): string {
   if (/^blob:/i.test(u)) return u; // created by us from data typed as non-executable
   if (/^data:image\/(png|jpe?g|gif|webp|avif|bmp|svg\+xml)[;,]/i.test(u)) return u; // images render inert in <img>
   if (kind === 'href' && /^(https?:|mailto:)/i.test(u)) return u;
+  if (kind === 'href' && /^\/(?![/\\])/.test(u)) return u; // same-origin path; `//x` and `/\x` would leave the origin
   if (kind === 'src' && /^https?:/i.test(u)) return u;
   return 'about:blank';
 }

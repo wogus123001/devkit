@@ -2,9 +2,12 @@ import './style.css';
 import { CATEGORIES, type Tool } from './types';
 import { TOOLS } from './tools';
 import { h, rememberInputs, store, toast } from './ui';
+import { PAGES, SITE_DESCRIPTION, SITE_TITLE, canonical, pageTitle, toolTitle } from './site';
+import { PAGE_RENDERERS, notFound } from './pages';
 
 const byId = new Map(TOOLS.map((t) => [t.id, t]));
 const app = document.getElementById('app')!;
+app.replaceChildren(); // drop the prerendered static content; the app renders the live UI
 
 // Clickjacking guard for hosts that cannot send `frame-ancestors` / X-Frame-Options (e.g. GitHub Pages):
 // refuse to render inside another site's frame, where hidden overlays could trick clicks or capture input.
@@ -60,7 +63,7 @@ const main = h('main', { class: 'main', id: 'main' });
 const shell = h('div', { class: 'app' });
 
 const sidebar = h('aside', { class: 'sidebar' },
-  h('a', { class: 'brand', href: '#/' },
+  h('a', { class: 'brand', href: '/' },
     h('span', { class: 'brand-logo' }, '</>'),
     h('span', null, h('div', { class: 'brand-name' }, 'DevKit'), h('div', { class: 'brand-sub' }, `개발자 도구 ${TOOLS.length}개`)),
   ),
@@ -83,10 +86,11 @@ const sidebar = h('aside', { class: 'sidebar' },
     ),
     h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => toast(`저장된 입력 ${store.clearInputs()}개를 지웠습니다`) }, '저장 데이터 삭제'),
   ),
+  h('div', { class: 'sidebar-links' }, ...PAGES.map((p) => h('a', { href: '/' + p.id }, p.title))),
 );
 const topbar = h('div', { class: 'topbar' },
   h('button', { class: 'btn btn-sm', type: 'button', 'aria-label': '메뉴', onclick: () => shell.classList.toggle('nav-open') }, '☰'),
-  h('a', { href: '#/', style: { fontWeight: '700', color: 'var(--text)', textDecoration: 'none' } }, 'DevKit'),
+  h('a', { href: '/', style: { fontWeight: '700', color: 'var(--text)', textDecoration: 'none' } }, 'DevKit'),
 );
 shell.append(sidebar, h('div', { style: { minWidth: '0' } }, topbar, main));
 app.append(shell);
@@ -103,7 +107,7 @@ function renderNav() {
     nav.append(
       h('div', { class: 'nav-group' },
         h('div', { class: 'nav-group-title' }, h('span', { class: 'nav-group-icon' }, cat.icon), cat.name),
-        ...tools.map((t) => h('a', { href: '#/' + t.id, class: t.id === active ? 'active' : '' }, t.name, isFav(t.id) ? h('span', { 'aria-label': '즐겨찾기' }, '★') : null)),
+        ...tools.map((t) => h('a', { href: '/' + t.id, class: t.id === active ? 'active' : '' }, t.name, isFav(t.id) ? h('span', { 'aria-label': '즐겨찾기' }, '★') : null)),
       ),
     );
   }
@@ -114,7 +118,7 @@ searchInput.addEventListener('input', renderNav);
 searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     const first = nav.querySelector('a');
-    if (first) location.hash = first.getAttribute('href')!;
+    if (first) navigate(first.getAttribute('href')!);
   } else if (e.key === 'Escape') {
     searchInput.value = '';
     renderNav();
@@ -130,8 +134,47 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------- routing ----------
+// Real paths (/base64) instead of hash URLs so every tool is its own indexable page.
+// scripts/prerender.mjs writes a static HTML file per path; the app takes over after load.
+const pageById = new Map(PAGES.map((p) => [p.id, p]));
+
 function currentRoute(): string {
-  return decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('?')[0];
+  let path = location.pathname;
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    /* malformed escape: use as-is */
+  }
+  return path.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '').replace(/^index$/, '');
+}
+
+function navigate(href: string) {
+  const url = new URL(href, location.href);
+  if (url.pathname !== location.pathname) history.pushState(null, '', url.pathname);
+  route();
+}
+
+// Old links used #/tool-id: move them to the matching path.
+{
+  const legacy = location.hash.match(/^#\/([a-z0-9-]*)/);
+  if (legacy) history.replaceState(null, '', '/' + legacy[1]);
+}
+
+document.addEventListener('click', (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = (e.target as Element).closest?.('a');
+  if (!a || a.target || a.hasAttribute('download')) return;
+  const href = a.getAttribute('href');
+  if (!href || !href.startsWith('/') || href.startsWith('//')) return;
+  e.preventDefault();
+  navigate(href);
+});
+
+function setMeta(title: string, description: string, id: string, indexable = true) {
+  document.title = title;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+  document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical(id));
+  document.querySelector('meta[name="robots"]')?.setAttribute('content', indexable ? 'index,follow' : 'noindex');
 }
 
 let cleanup: (() => void) | void;
@@ -141,21 +184,28 @@ function route() {
   shell.classList.remove('nav-open');
   const id = currentRoute();
   const tool = byId.get(id);
+  const page = pageById.get(id);
   main.replaceChildren();
-  if (!tool) {
+  if (!id) {
     renderHome();
-    document.title = 'DevKit — 개발자 도구 모음';
-  } else {
+    setMeta(SITE_TITLE, SITE_DESCRIPTION, '');
+  } else if (tool) {
     pushRecent(tool.id);
     renderTool(tool);
-    document.title = `${tool.name} — DevKit`;
+    setMeta(toolTitle(tool.name), tool.description, tool.id);
+  } else if (page) {
+    main.append(...PAGE_RENDERERS[page.id]());
+    setMeta(pageTitle(page.title), page.description, page.id);
+  } else {
+    main.append(...notFound());
+    setMeta(pageTitle('페이지를 찾을 수 없음'), SITE_DESCRIPTION, id, false);
   }
   renderNav();
   window.scrollTo(0, 0);
 }
 
 function card(t: Tool) {
-  return h('a', { class: 'card', href: '#/' + t.id }, h('div', { class: 'card-name' }, t.name), h('div', { class: 'card-desc' }, t.description));
+  return h('a', { class: 'card', href: '/' + t.id }, h('div', { class: 'card-name' }, t.name), h('div', { class: 'card-desc' }, t.description));
 }
 
 function renderHome() {
@@ -210,5 +260,5 @@ function renderTool(tool: Tool) {
   }
 }
 
-window.addEventListener('hashchange', route);
+window.addEventListener('popstate', route);
 route();

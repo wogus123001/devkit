@@ -98,6 +98,17 @@ kbd { font: 11px var(--mono); padding: 1px 6px; border: 1px solid var(--border);
 .star.on { color: #d97706; border-color: #f5c063; }
 
 /* ---------- home ---------- */
+.sidebar-links { padding: 4px 18px 14px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.sidebar-links a { color: var(--faint); text-decoration: none; }
+.sidebar-links a:hover { color: var(--text); text-decoration: underline; }
+.prose { max-width: 720px; line-height: 1.7; }
+.prose h2 { font-size: 16px; margin: 24px 0 6px; }
+.prose p { margin: 0 0 10px; color: var(--muted); }
+.prose table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.prose th, .prose td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.prerender { max-width: 860px; margin: 0 auto; padding: 28px 24px; line-height: 1.6; }
+.prerender h2 { font-size: 15px; margin: 20px 0 6px; }
+.prerender ul { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; margin: 0; list-style: none; }
 .hero { margin-bottom: 24px; }
 .hero h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.02em; }
 .hero p { margin: 0; color: var(--muted); }
