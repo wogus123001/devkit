@@ -7,7 +7,7 @@ export const SITE_TITLE = 'DevKit — 개발자 도구 모음';
 export const SITE_DESCRIPTION = 'Base64, URL, JWT, JSON, YAML, 정규식 등 개발자 도구를 한곳에. 모든 처리는 브라우저에서만 이루어집니다.';
 
 /** Contact shown on the about page. null hides the contact section. */
-export const CONTACT: { label: string; href: string } | null = null;
+export const CONTACT: { label: string; href: string } | null = { label: 'GitHub Issues에 남겨 주세요', href: 'https://github.com/wogus123001/devkit/issues' };
 
 export interface StaticPage {
   id: string;
