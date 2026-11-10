@@ -281,3 +281,4 @@ mark.zero { padding: 0 1px; background: var(--accent); }
   .result-row .label { grid-column: 1 / -1; }
   textarea.code, pre.code { min-height: 220px; }
 }
+.tool-loading { color: var(--faint); padding: 12px 0; }

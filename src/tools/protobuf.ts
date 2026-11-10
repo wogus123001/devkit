@@ -1,6 +1,6 @@
 import type { Tool } from '../types';
 import { MAX_BYTES, decodeRaw, decodeWithSchema, encodeWithSchema, formatBinary, lookupType, parseBinary, parseSchema, rawToText, type Schema } from '../protobuf';
-import { parseJson } from './format';
+import { parseJson } from '../json';
 import { button, debounce, errorBox, escapeHtml, field, h, highlightJson, panel, store, textarea, transformer } from '../ui';
 
 const SAMPLE_SCHEMA = `syntax = "proto3";

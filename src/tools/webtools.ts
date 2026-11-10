@@ -1,7 +1,7 @@
 import type { Tool } from '../types';
 import QRCode from 'qrcode';
 import { bytesToBase64, bytesToDisplay, base64ToBytes, utf8 } from '../bytes';
-import { parseJson } from './format';
+import { parseJson } from '../json';
 import { checkbox, copyButton, debounce, errorBox, field, h, panel, select, setHtml, escapeHtml, store, textarea, transformer } from '../ui';
 
 const kvRow = (k: string, v: string) => h('tr', null, h('th', null, k), h('td', null, v ? copyButton(() => v) : null, v || h('span', { class: 'note' }, '-')));

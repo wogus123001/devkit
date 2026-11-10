@@ -4,11 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/prerender.mjs",
+    "dev": "node scripts/gen-tool-meta.mjs && vite",
+    "build": "node scripts/gen-tool-meta.mjs && tsc --noEmit && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "audit": "npm audit --omit=dev"
+    "audit": "npm audit --omit=dev",
+    "meta": "node scripts/gen-tool-meta.mjs"
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",

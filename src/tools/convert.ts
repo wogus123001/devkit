@@ -1,7 +1,7 @@
 import type { Tool } from '../types';
 import YAML from 'yaml';
 import cronstrue from 'cronstrue/i18n';
-import { YAML_JS_OPTS, parseJson } from './format';
+import { YAML_JS_OPTS, parseJson } from '../json';
 import { bareObject } from '../security';
 import { copyButton, field, h, highlightJson, highlightYaml, panel, select, store, transformer } from '../ui';
 

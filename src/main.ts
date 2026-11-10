@@ -1,6 +1,6 @@
 import './style.css';
-import { CATEGORIES, type Tool } from './types';
-import { TOOLS } from './tools';
+import { CATEGORIES } from './types';
+import { TOOL_META as TOOLS, loadTool, type ToolMeta } from './tools/lazy';
 import { h, rememberInputs, store, toast } from './ui';
 import { PAGES, SITE_DESCRIPTION, SITE_TITLE, canonical, pageTitle, toolTitle } from './site';
 import { PAGE_RENDERERS, notFound } from './pages';
@@ -32,7 +32,7 @@ function pushRecent(id: string) {
 
 // ---------- search ----------
 const norm = (s: string) => s.toLowerCase().replace(/[\s\-_/]+/g, '');
-function matches(tool: Tool, q: string): boolean {
+function matches(tool: ToolMeta, q: string): boolean {
   if (!q) return true;
   const hay = norm([tool.name, tool.description, tool.id, ...(tool.keywords ?? [])].join(' '));
   return q.split(/\s+/).filter(Boolean).every((w) => hay.includes(norm(w)));
@@ -178,7 +178,9 @@ function setMeta(title: string, description: string, id: string, indexable = tru
 }
 
 let cleanup: (() => void) | void;
+let routeSeq = 0; // bumps on every route so a slow tool import cannot render over a newer page
 function route() {
+  routeSeq++;
   if (typeof cleanup === 'function') cleanup();
   cleanup = undefined;
   shell.classList.remove('nav-open');
@@ -204,7 +206,7 @@ function route() {
   window.scrollTo(0, 0);
 }
 
-function card(t: Tool) {
+function card(t: ToolMeta) {
   return h('a', { class: 'card', href: '/' + t.id }, h('div', { class: 'card-name' }, t.name), h('div', { class: 'card-desc' }, t.description));
 }
 
@@ -230,7 +232,8 @@ function renderHome() {
   }
 }
 
-function renderTool(tool: Tool) {
+function renderTool(tool: ToolMeta) {
+  const seq = routeSeq;
   const cat = CATEGORIES.find((c) => c.id === tool.category)!;
   const star = h('button', {
     class: 'btn star' + (isFav(tool.id) ? ' on' : ''),
@@ -253,11 +256,18 @@ function renderTool(tool: Tool) {
     ),
     body,
   );
-  try {
-    cleanup = tool.render(body);
-  } catch (e) {
-    body.append(h('div', { class: 'error-box' }, '도구를 불러오지 못했습니다: ' + (e as Error).message));
-  }
+  const loading = setTimeout(() => body.append(h('div', { class: 'tool-loading' }, '불러오는 중…')), 150);
+  loadTool(tool)
+    .then((impl) => {
+      if (seq !== routeSeq) return;
+      body.replaceChildren();
+      cleanup = impl.render(body);
+    })
+    .catch((e) => {
+      if (seq !== routeSeq) return;
+      body.replaceChildren(h('div', { class: 'error-box' }, '도구를 불러오지 못했습니다: ' + (e as Error).message));
+    })
+    .finally(() => clearTimeout(loading));
 }
 
 window.addEventListener('popstate', route);

@@ -1,7 +1,7 @@
 import type { Tool } from '../types';
 import YAML from 'yaml';
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
-import { YAML_JS_OPTS, parseJson } from './format';
+import { YAML_JS_OPTS, parseJson } from '../json';
 import { bareObject, parseInert } from '../security';
 import { checkbox, copyButton, debounce, errorBox, escapeHtml, field, h, highlightJson, highlightXml, highlightYaml, panel, store, textarea, transformer } from '../ui';
 
