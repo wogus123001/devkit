@@ -1,7 +1,7 @@
 import type { Tool } from '../types';
 import { MAX_BYTES, decodeRaw, decodeWithSchema, encodeWithSchema, formatBinary, lookupType, parseBinary, parseSchema, rawToText, type Schema } from '../protobuf';
 import { parseJson } from './format';
-import { debounce, errorBox, escapeHtml, field, h, highlightJson, panel, store, textarea, transformer } from '../ui';
+import { button, debounce, errorBox, escapeHtml, field, h, highlightJson, panel, store, textarea, transformer } from '../ui';
 
 const SAMPLE_SCHEMA = `syntax = "proto3";
 package demo;
@@ -67,7 +67,16 @@ function protobufTool(root: HTMLElement) {
   const typeSelect = h('select', { class: 'input', 'aria-label': '메시지 타입', onchange: () => ((msgType = typeSelect.value), persist(), ctx.refresh()) });
   const schemaErr = errorBox();
   const schemaMeta = h('span', { class: 'panel-meta' });
-  const schemaPanel = panel('스키마 (.proto)', [schemaMeta, field('메시지 타입', typeSelect, 'inline')], h('div', { class: 'output-wrap' }, schemaErr, schemaInput));
+  const schemaPanel = panel('스키마 (.proto)', [
+    schemaMeta,
+    button('예시 스키마', () => {
+      schemaInput.value = SAMPLE_SCHEMA;
+      msgType = 'demo.Person';
+      compile();
+      ctx.refresh();
+    }),
+    field('메시지 타입', typeSelect, 'inline'),
+  ], h('div', { class: 'output-wrap' }, schemaErr, schemaInput));
   schemaPanel.style.marginBottom = '14px';
   const persist = () => store.set('tool:protobuf-schema', { schema: schemaInput.value.length < 200_000 ? schemaInput.value : '', type: msgType });
 

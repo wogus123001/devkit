@@ -1,4 +1,4 @@
-export type CategoryId = 'encode' | 'format' | 'convert' | 'regex' | 'crypto' | 'generate' | 'text' | 'web';
+export type CategoryId = 'encode' | 'format' | 'convert' | 'regex' | 'crypto' | 'generate' | 'text' | 'web' | 'dev';
 
 export interface Category {
   id: CategoryId;
@@ -15,6 +15,7 @@ export const CATEGORIES: Category[] = [
   { id: 'generate', name: '생성기', icon: '✦' },
   { id: 'text', name: '텍스트', icon: 'Aa' },
   { id: 'web', name: '웹 / 네트워크', icon: '◎' },
+  { id: 'dev', name: '개발 / 시스템', icon: '>_' },
 ];
 
 /** A tool renders into `root` and may return a cleanup function. */

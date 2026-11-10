@@ -1,13 +1,22 @@
 import type { Tool } from '../types';
 import { md5 } from 'js-md5';
+import { sha3_256, sha3_512 } from '@noble/hashes/sha3.js';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { hmac } from '@noble/hashes/hmac.js';
 import { bytesToBase64, formatBytes, toHex, utf8 } from '../bytes';
 import { button, checkbox, copyButton, debounce, field, h, panel, segmented, select, store, textarea, toast } from '../ui';
 
-const ALGOS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
+const ALGOS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512', 'SHA3-256', 'SHA3-512', 'RIPEMD-160'] as const;
 type Algo = (typeof ALGOS)[number];
+/** Algorithms Web Crypto lacks, implemented by the audited @noble/hashes library. */
+const NOBLE = { 'SHA3-256': sha3_256, 'SHA3-512': sha3_512, 'RIPEMD-160': ripemd160 } as const;
 
 async function digest(algo: Algo, data: Uint8Array, key: Uint8Array | null): Promise<Uint8Array> {
   if (algo === 'MD5') return new Uint8Array(key ? md5.hmac.arrayBuffer(key, data) : md5.arrayBuffer(data));
+  if (algo in NOBLE) {
+    const fn = NOBLE[algo as keyof typeof NOBLE];
+    return key ? hmac(fn, key, data) : fn(data);
+  }
   if (key) {
     const k = await crypto.subtle.importKey('raw', (key.length ? key : new Uint8Array(1)) as BufferSource, { name: 'HMAC', hash: algo }, false, ['sign']);
     return new Uint8Array(await crypto.subtle.sign('HMAC', k, data as BufferSource));
@@ -165,6 +174,6 @@ function passwordTool(root: HTMLElement) {
 }
 
 export const cryptoTools: Tool[] = [
-  { id: 'hash', name: '해시 생성기', category: 'crypto', description: '텍스트나 파일의 MD5, SHA-1, SHA-256, SHA-512 해시와 HMAC을 계산하고 비교합니다.', keywords: ['md5', 'sha1', 'sha256', 'sha512', 'hmac', 'checksum', '체크섬', 'digest'], render: hashTool },
+  { id: 'hash', name: '해시 생성기', category: 'crypto', description: '텍스트나 파일의 MD5, SHA-1, SHA-2, SHA-3, RIPEMD-160 해시와 HMAC을 계산하고 비교합니다.', keywords: ['md5', 'sha1', 'sha256', 'sha512', 'sha3', 'ripemd160', 'keccak', 'hmac', 'checksum', '체크섬', 'digest'], render: hashTool },
   { id: 'password', name: '비밀번호 생성기', category: 'crypto', description: '길이와 문자 종류를 지정해 안전한 랜덤 비밀번호를 생성하고 강도를 표시합니다.', keywords: ['password generator', 'random', '랜덤', '패스워드'], render: passwordTool },
 ];

@@ -8,5 +8,8 @@ import { generateTools } from './generate';
 import { textTools } from './text';
 import { webTools } from './web';
 import { protobufTools } from './protobuf';
+import { secureTools } from './secure';
+import { devTools } from './devtools';
+import { webTools2 } from './webtools';
 
-export const TOOLS: Tool[] = [...encodingTools, ...protobufTools, ...formatTools, ...regexTools, ...convertTools, ...cryptoTools, ...generateTools, ...textTools, ...webTools];
+export const TOOLS: Tool[] = [...encodingTools, ...protobufTools, ...formatTools, ...regexTools, ...convertTools, ...cryptoTools, ...secureTools, ...generateTools, ...textTools, ...webTools, ...webTools2, ...devTools];

@@ -38,7 +38,7 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 
 // ---------- persistence (per-viewer convenience only) ----------
 /** Tools whose input commonly holds credentials: never written to storage. */
-const SENSITIVE_KEYS = new Set(['tool:jwt', 'tool:hash', 'tool:urlparse', 'tool:base64', 'tool:string-escape']);
+const SENSITIVE_KEYS = new Set(['tool:jwt', 'tool:hash', 'tool:urlparse', 'tool:base64', 'tool:string-escape', 'tool:mask']);
 
 /** Keep only fields whose type matches the fallback, so corrupted or tampered storage cannot inject odd values. */
 function conform<T>(parsed: unknown, fallback: T): T {
